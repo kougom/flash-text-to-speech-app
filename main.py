@@ -5,6 +5,7 @@ from pynput import keyboard
 from PIL import Image
 import pystray
 from execution.audio_recorder import AudioRecorder
+from execution.transcribe_and_type import Transcriber
 from dotenv import load_dotenv
 import sys
 
