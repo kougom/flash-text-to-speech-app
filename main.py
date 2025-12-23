@@ -199,8 +199,19 @@ class FlashSTTApp:
         listener_thread = threading.Thread(target=self.run_listener, daemon=True)
         listener_thread.start()
         
-        # Run the system tray icon in the main thread
-        self.icon.run()
+        # Start system tray icon in a background thread
+        # This is necessary so the main thread can handle the tkinter window
+        threading.Thread(target=self.icon.run, daemon=True).start()
+        
+        # Main thread loop to handle UI requests
+        try:
+            while self.running:
+                if self.show_settings_requested:
+                    self._open_settings_window()
+                    self.show_settings_requested = False
+                time.sleep(0.1)
+        except KeyboardInterrupt:
+            self.on_quit()
 
 if __name__ == "__main__":
     app = FlashSTTApp()
