@@ -1,6 +1,6 @@
 import os
 import time
-from google import genai
+import google.genai as genai
 from google.genai import types
 from pynput.keyboard import Controller
 from dotenv import load_dotenv

@@ -31,7 +31,7 @@ def build_exe():
         f"--icon={ico_icon}",
         "--add-data", ".env;.",
         "--add-data", "icon.png;.",
-        "--collect-all", "google.generativeai",
+        "--collect-all", "google.genai",
         "--name", "FlashSTT",
         "main.py"
     ]
