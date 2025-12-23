@@ -5,8 +5,7 @@ from pynput import keyboard
 from PIL import Image
 import pystray
 from execution.audio_recorder import AudioRecorder
-from execution.transcribe_and_type import Transcriber
-
+from dotenv import load_dotenv
 import sys
 
 def resource_path(relative_path):
@@ -18,8 +17,21 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+# Persistence Fix: Find where the actual .exe or script is located
+if getattr(sys, 'frozen', False):
+    # If running as a bundle, the .exe dir is the directory of sys.executable
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # If running as a script, it's the current file's dir
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+
 class FlashSTTApp:
     def __init__(self):
+        # Load environment from the persistent path
+        load_dotenv(ENV_PATH)
+        
         self.recorder = AudioRecorder()
         self.transcriber = Transcriber()
         # .tmp should stay in the current working directory of the user, not the bundled temp folder
@@ -131,13 +143,11 @@ class FlashSTTApp:
         root.mainloop()
 
     def save_api_key(self, key):
-        print(f"Saving API Key to {env_path}...")
-        # Simplistic way to update .env. for a more robust app, use a dedicated lib or parser
-        # Here we just read and replace or append.
+        print(f"Saving API Key to {ENV_PATH}...")
         lines = []
         found = False
-        if os.path.exists(env_path):
-            with open(env_path, 'r') as f:
+        if os.path.exists(ENV_PATH):
+            with open(ENV_PATH, 'r') as f:
                 for line in f:
                     if line.startswith("GEMINI_API_KEY="):
                         lines.append(f"GEMINI_API_KEY={key}\n")
@@ -148,11 +158,11 @@ class FlashSTTApp:
         if not found:
             lines.append(f"GEMINI_API_KEY={key}\n")
             
-        with open(env_path, 'w') as f:
+        with open(ENV_PATH, 'w') as f:
             f.writelines(lines)
         
         # Force reload in current process
-        load_dotenv(env_path, override=True)
+        load_dotenv(ENV_PATH, override=True)
 
     def on_press(self, key):
         if not self.running:

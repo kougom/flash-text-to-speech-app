@@ -5,8 +5,18 @@ from google.genai import types
 from pynput.keyboard import Controller
 from dotenv import load_dotenv
 
-import sys
+# Persistence Fix: Find where the actual .exe or script is located
+if getattr(sys, 'frozen', False):
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # If in 'execution' folder, go up one level to find .env
+    if os.path.basename(BASE_DIR) == "execution":
+        BASE_DIR = os.path.dirname(BASE_DIR)
 
+ENV_PATH = os.path.join(BASE_DIR, ".env")
+
+# Fallback: check bundled path just in case for initial defaults
 def resource_path(relative_path):
     try:
         base_path = sys._MEIPASS
@@ -14,12 +24,15 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
-# Look for .env in the bundled resources first, then in current working directory
-env_path = resource_path(".env")
-if not os.path.exists(env_path):
-    env_path = os.path.join(os.getcwd(), ".env")
+bundled_env = resource_path(".env")
 
-load_dotenv(env_path)
+# Load persistent env if exists, else bundled
+if os.path.exists(ENV_PATH):
+    load_dotenv(ENV_PATH)
+elif os.path.exists(bundled_env):
+    load_dotenv(bundled_env)
+else:
+    load_dotenv()
 
 class Transcriber:
     def __init__(self):
@@ -32,8 +45,8 @@ class Transcriber:
         if new_key:
             api_key = new_key
         else:
-            # Reload env to get latest changes from file
-            load_dotenv(env_path, override=True)
+            # Reload env from the persistent path
+            load_dotenv(ENV_PATH, override=True)
             api_key = os.getenv("GEMINI_API_KEY")
             
         if api_key:
