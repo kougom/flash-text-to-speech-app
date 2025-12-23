@@ -23,11 +23,25 @@ load_dotenv(env_path)
 
 class Transcriber:
     def __init__(self):
-        api_key = os.getenv("GEMINI_API_KEY")
-        if not api_key:
-            print("Error: GEMINI_API_KEY not found in .env")
-        self.client = genai.Client(api_key=api_key)
         self.keyboard = Controller()
+        self.client = None
+        self.update_client()
+
+    def update_client(self, new_key=None):
+        """Update the client with a new key or reload from .env"""
+        if new_key:
+            api_key = new_key
+        else:
+            # Reload env to get latest changes from file
+            load_dotenv(env_path, override=True)
+            api_key = os.getenv("GEMINI_API_KEY")
+            
+        if api_key:
+            print(f"Initializing Gemini client with key: {api_key[:4]}...{api_key[-4:]}")
+            self.client = genai.Client(api_key=api_key)
+        else:
+            print("Error: GEMINI_API_KEY not found. Please set it in the settings.")
+            self.client = None
 
     def transcribe_and_type(self, audio_path):
         try:

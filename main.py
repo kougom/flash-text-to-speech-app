@@ -42,9 +42,57 @@ class FlashSTTApp:
         image_path = resource_path("icon.png")
         image = Image.open(image_path)
         menu = pystray.Menu(
+            pystray.MenuItem("Set API Key", self.show_settings),
             pystray.MenuItem("Exit", self.on_quit)
         )
         self.icon = pystray.Icon("FlashSTT", image, "Flash STT (Ctrl+Alt)", menu)
+
+    def show_settings(self, icon=None, item=None):
+        import tkinter as tk
+        from tkinter import simpledialog, messagebox
+        
+        # We need a hidden root window for simpledialog
+        root = tk.Tk()
+        root.withdraw()
+        root.attributes("-topmost", True) # Bring to front
+        
+        # Pre-fill with current key if it exists
+        current_key = os.getenv("GEMINI_API_KEY", "")
+        
+        new_key = simpledialog.askstring("Settings", "Enter your Gemini API Key:", 
+                                       initialvalue=current_key, parent=root)
+        
+        if new_key is not None: # Not cancelled
+            self.save_api_key(new_key)
+            # Update the transcriber's client immediately
+            self.transcriber.update_client(new_key)
+            messagebox.showinfo("Success", "API Key updated successfully!", parent=root)
+        
+        root.destroy()
+
+    def save_api_key(self, key):
+        print(f"Saving API Key to {env_path}...")
+        # Simplistic way to update .env. for a more robust app, use a dedicated lib or parser
+        # Here we just read and replace or append.
+        lines = []
+        found = False
+        if os.path.exists(env_path):
+            with open(env_path, 'r') as f:
+                for line in f:
+                    if line.startswith("GEMINI_API_KEY="):
+                        lines.append(f"GEMINI_API_KEY={key}\n")
+                        found = True
+                    else:
+                        lines.append(line)
+        
+        if not found:
+            lines.append(f"GEMINI_API_KEY={key}\n")
+            
+        with open(env_path, 'w') as f:
+            f.writelines(lines)
+        
+        # Force reload in current process
+        load_dotenv(env_path, override=True)
 
     def on_press(self, key):
         if not self.running:
