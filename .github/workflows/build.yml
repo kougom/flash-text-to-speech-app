@@ -47,17 +47,17 @@ jobs:
     - name: Build with PyInstaller (Windows)
       if: runner.os == 'Windows'
       run: |
-        python -m PyInstaller --noconsole --onefile --icon=icon.ico --add-data ".env;." --add-data "icon.png;." --name FlashSTT_Win main.py
+        python -m PyInstaller --noconsole --onefile --icon=icon.ico --add-data ".env;." --add-data "icon.png;." --collect-all google.generativeai --name FlashSTT_Win main.py
 
     - name: Build with PyInstaller (macOS)
       if: runner.os == 'macOS'
       run: |
-        python -m PyInstaller --noconsole --onefile --icon=icon.png --add-data ".env:." --add-data "icon.png:." --name FlashSTT_Mac main.py
+        python -m PyInstaller --noconsole --onefile --icon=icon.png --add-data ".env:." --add-data "icon.png:." --collect-all google.generativeai --name FlashSTT_Mac main.py
 
     - name: Build with PyInstaller (Linux)
       if: runner.os == 'Linux'
       run: |
-        python -m PyInstaller --noconsole --onefile --icon=icon.png --add-data ".env:." --add-data "icon.png:." --name FlashSTT_Linux main.py
+        python -m PyInstaller --noconsole --onefile --icon=icon.png --add-data ".env:." --add-data "icon.png:." --collect-all google.generativeai --name FlashSTT_Linux main.py
 
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
