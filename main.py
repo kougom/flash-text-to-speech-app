@@ -49,25 +49,90 @@ class FlashSTTApp:
 
     def show_settings(self, icon=None, item=None):
         import tkinter as tk
-        from tkinter import simpledialog, messagebox
+        from tkinter import messagebox
+        import ctypes
         
-        # We need a hidden root window for simpledialog
+        # Enable High-DPI awareness on Windows for a sharp UI
+        try:
+            ctypes.windll.shcore.SetProcessDpiAwareness(1)
+        except Exception:
+            try:
+                ctypes.windll.user32.SetProcessDPIAware()
+            except Exception:
+                pass
+
+        class FlashSettings(tk.Toplevel):
+            def __init__(self, parent, current_key, save_callback):
+                super().__init__(parent)
+                self.title("Flash STT Settings")
+                self.geometry("400x200")
+                self.resizable(False, False)
+                self.save_callback = save_callback
+                
+                # Set window icon
+                try:
+                    icon_path = resource_path("icon.ico")
+                    self.iconbitmap(icon_path)
+                except Exception as e:
+                    print(f"Could not set window icon: {e}")
+
+                # Modern styling
+                self.configure(bg="#1e1e1e")
+                style_font = ("Segoe UI", 10)
+                title_font = ("Segoe UI Semibold", 12)
+
+                # Layout
+                tk.Label(self, text="Gemini API Configuration", font=title_font, 
+                         bg="#1e1e1e", fg="#ffffff", pady=20).pack()
+                
+                tk.Label(self, text="Enter your Gemini API Key:", font=style_font, 
+                         bg="#1e1e1e", fg="#cccccc").pack(pady=5)
+                
+                self.key_entry = tk.Entry(self, width=40, font=style_font, 
+                                          bg="#333333", fg="#ffffff", insertbackground="white",
+                                          relief="flat", borderwidth=10)
+                self.key_entry.insert(0, current_key)
+                self.key_entry.pack(pady=10, padx=20)
+                self.key_entry.focus_set()
+
+                btn_frame = tk.Frame(self, bg="#1e1e1e")
+                btn_frame.pack(pady=10)
+
+                tk.Button(btn_frame, text="Save Key", command=self.save, 
+                          width=12, font=style_font, bg="#0078d4", fg="white", 
+                          activebackground="#005a9e", activeforeground="white",
+                          relief="flat", cursor="hand2").pack(side=tk.LEFT, padx=5)
+                
+                tk.Button(btn_frame, text="Cancel", command=self.destroy, 
+                          width=12, font=style_font, bg="#333333", fg="white",
+                          activebackground="#444444", activeforeground="white",
+                          relief="flat", cursor="hand2").pack(side=tk.LEFT, padx=5)
+
+            def save(self):
+                new_key = self.key_entry.get().strip()
+                if new_key:
+                    self.save_callback(new_key)
+                    self.destroy()
+                else:
+                    messagebox.showwarning("Warning", "API Key cannot be empty.")
+
+        # Main window for the settings app
         root = tk.Tk()
-        root.withdraw()
-        root.attributes("-topmost", True) # Bring to front
+        root.withdraw() # Hide main root
         
-        # Pre-fill with current key if it exists
         current_key = os.getenv("GEMINI_API_KEY", "")
         
-        new_key = simpledialog.askstring("Settings", "Enter your Gemini API Key:", 
-                                       initialvalue=current_key, parent=root)
-        
-        if new_key is not None: # Not cancelled
+        def on_save(new_key):
             self.save_api_key(new_key)
-            # Update the transcriber's client immediately
             self.transcriber.update_client(new_key)
-            messagebox.showinfo("Success", "API Key updated successfully!", parent=root)
+            messagebox.showinfo("Success", "API Key updated successfully!")
+            root.quit()
+
+        settings_win = FlashSettings(root, current_key, on_save)
+        settings_win.protocol("WM_DELETE_WINDOW", root.quit)
         
+        # Proper event loop to prevent system lag
+        root.mainloop()
         root.destroy()
 
     def save_api_key(self, key):
