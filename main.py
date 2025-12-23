@@ -62,12 +62,13 @@ class FlashSTTApp:
                 pass
 
         class FlashSettings(tk.Toplevel):
-            def __init__(self, parent, current_key, save_callback):
+            def __init__(self, parent, current_key, save_callback, cancel_callback):
                 super().__init__(parent)
                 self.title("Flash STT Settings")
                 self.geometry("400x200")
                 self.resizable(False, False)
                 self.save_callback = save_callback
+                self.cancel_callback = cancel_callback
                 
                 # Set window icon
                 try:
@@ -90,7 +91,7 @@ class FlashSTTApp:
                 
                 self.key_entry = tk.Entry(self, width=40, font=style_font, 
                                           bg="#333333", fg="#ffffff", insertbackground="white",
-                                          relief="flat", borderwidth=10)
+                                          relief="flat", borderwidth=1)
                 self.key_entry.insert(0, current_key)
                 self.key_entry.pack(pady=10, padx=20)
                 self.key_entry.focus_set()
@@ -103,7 +104,7 @@ class FlashSTTApp:
                           activebackground="#005a9e", activeforeground="white",
                           relief="flat", cursor="hand2").pack(side=tk.LEFT, padx=5)
                 
-                tk.Button(btn_frame, text="Cancel", command=self.destroy, 
+                tk.Button(btn_frame, text="Cancel", command=self.cancel_callback, 
                           width=12, font=style_font, bg="#333333", fg="white",
                           activebackground="#444444", activeforeground="white",
                           relief="flat", cursor="hand2").pack(side=tk.LEFT, padx=5)
@@ -112,7 +113,6 @@ class FlashSTTApp:
                 new_key = self.key_entry.get().strip()
                 if new_key:
                     self.save_callback(new_key)
-                    self.destroy()
                 else:
                     messagebox.showwarning("Warning", "API Key cannot be empty.")
 
@@ -128,8 +128,11 @@ class FlashSTTApp:
             messagebox.showinfo("Success", "API Key updated successfully!")
             root.quit()
 
-        settings_win = FlashSettings(root, current_key, on_save)
-        settings_win.protocol("WM_DELETE_WINDOW", root.quit)
+        def on_cancel():
+            root.quit()
+
+        settings_win = FlashSettings(root, current_key, on_save, on_cancel)
+        settings_win.protocol("WM_DELETE_WINDOW", on_cancel)
         
         # Proper event loop to prevent system lag
         root.mainloop()
