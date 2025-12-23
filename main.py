@@ -52,7 +52,7 @@ class FlashSTTApp:
         from tkinter import messagebox
         import ctypes
         
-        # Enable High-DPI awareness on Windows for a sharp UI
+        # Enable High-DPI awareness
         try:
             ctypes.windll.shcore.SetProcessDpiAwareness(1)
         except Exception:
@@ -61,82 +61,65 @@ class FlashSTTApp:
             except Exception:
                 pass
 
-        class FlashSettings(tk.Toplevel):
-            def __init__(self, parent, current_key, save_callback, cancel_callback):
-                super().__init__(parent)
-                self.title("Flash STT Settings")
-                self.geometry("400x200")
-                self.resizable(False, False)
-                self.save_callback = save_callback
-                self.cancel_callback = cancel_callback
-                
-                # Set window icon
-                try:
-                    icon_path = resource_path("icon.ico")
-                    self.iconbitmap(icon_path)
-                except Exception as e:
-                    print(f"Could not set window icon: {e}")
-
-                # Modern styling
-                self.configure(bg="#1e1e1e")
-                style_font = ("Segoe UI", 10)
-                title_font = ("Segoe UI Semibold", 12)
-
-                # Layout
-                tk.Label(self, text="Gemini API Configuration", font=title_font, 
-                         bg="#1e1e1e", fg="#ffffff", pady=20).pack()
-                
-                tk.Label(self, text="Enter your Gemini API Key:", font=style_font, 
-                         bg="#1e1e1e", fg="#cccccc").pack(pady=5)
-                
-                self.key_entry = tk.Entry(self, width=40, font=style_font, 
-                                          bg="#333333", fg="#ffffff", insertbackground="white",
-                                          relief="flat", borderwidth=1)
-                self.key_entry.insert(0, current_key)
-                self.key_entry.pack(pady=10, padx=20)
-                self.key_entry.focus_set()
-
-                btn_frame = tk.Frame(self, bg="#1e1e1e")
-                btn_frame.pack(pady=10)
-
-                tk.Button(btn_frame, text="Save Key", command=self.save, 
-                          width=12, font=style_font, bg="#0078d4", fg="white", 
-                          activebackground="#005a9e", activeforeground="white",
-                          relief="flat", cursor="hand2").pack(side=tk.LEFT, padx=5)
-                
-                tk.Button(btn_frame, text="Cancel", command=self.cancel_callback, 
-                          width=12, font=style_font, bg="#333333", fg="white",
-                          activebackground="#444444", activeforeground="white",
-                          relief="flat", cursor="hand2").pack(side=tk.LEFT, padx=5)
-
-            def save(self):
-                new_key = self.key_entry.get().strip()
-                if new_key:
-                    self.save_callback(new_key)
-                else:
-                    messagebox.showwarning("Warning", "API Key cannot be empty.")
-
-        # Main window for the settings app
         root = tk.Tk()
-        root.withdraw() # Hide main root
+        root.title("Flash STT Settings")
+        root.geometry("400x220")
+        root.resizable(False, False)
+        root.attributes("-topmost", True)
+        
+        # Set window icon
+        try:
+            icon_path = resource_path("icon.ico")
+            root.iconbitmap(icon_path)
+        except Exception as e:
+            print(f"Could not set window icon: {e}")
+
+        # Modern styling
+        root.configure(bg="#1e1e1e")
+        style_font = ("Segoe UI", 10)
+        title_font = ("Segoe UI Semibold", 12)
+
+        # Layout
+        tk.Label(root, text="Gemini API Configuration", font=title_font, 
+                 bg="#1e1e1e", fg="#ffffff", pady=20).pack()
+        
+        tk.Label(root, text="Enter your Gemini API Key:", font=style_font, 
+                 bg="#1e1e1e", fg="#cccccc").pack(pady=5)
         
         current_key = os.getenv("GEMINI_API_KEY", "")
-        
-        def on_save(new_key):
-            self.save_api_key(new_key)
-            self.transcriber.update_client(new_key)
-            messagebox.showinfo("Success", "API Key updated successfully!")
-            root.quit()
+        key_entry = tk.Entry(root, width=40, font=style_font, 
+                                  bg="#333333", fg="#ffffff", insertbackground="white",
+                                  relief="flat", borderwidth=1)
+        key_entry.insert(0, current_key)
+        key_entry.pack(pady=10, padx=20)
+        key_entry.focus_set()
 
-        def on_cancel():
-            root.quit()
+        def save():
+            new_key = key_entry.get().strip()
+            if new_key:
+                self.save_api_key(new_key)
+                self.transcriber.update_client(new_key)
+                messagebox.showinfo("Success", "API Key updated successfully!", parent=root)
+                root.destroy()
+            else:
+                messagebox.showwarning("Warning", "API Key cannot be empty.", parent=root)
 
-        settings_win = FlashSettings(root, current_key, on_save, on_cancel)
-        settings_win.protocol("WM_DELETE_WINDOW", on_cancel)
+        def cancel():
+            root.destroy()
+
+        btn_frame = tk.Frame(root, bg="#1e1e1e")
+        btn_frame.pack(pady=15)
+
+        tk.Button(btn_frame, text="Save Key", command=save, 
+                  width=12, font=style_font, bg="#0078d4", fg="white", 
+                  relief="flat", cursor="hand2").pack(side=tk.LEFT, padx=5)
         
-        # Proper event loop to prevent system lag
+        tk.Button(btn_frame, text="Cancel", command=cancel, 
+                  width=12, font=style_font, bg="#333333", fg="white",
+                  relief="flat", cursor="hand2").pack(side=tk.LEFT, padx=5)
+
+        root.protocol("WM_DELETE_WINDOW", cancel)
         root.mainloop()
-        root.destroy()
 
     def save_api_key(self, key):
         print(f"Saving API Key to {env_path}...")
