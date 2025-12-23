@@ -33,26 +33,17 @@ class FlashSTTApp:
         self.alt_pressed = False
         self.is_recording = False
         self.running = True
+        self.show_settings_requested = False
 
         # Setup System Tray
         self.icon = None
         self.setup_tray()
-
-    def setup_tray(self):
-        image_path = resource_path("icon.png")
-        image = Image.open(image_path)
-        menu = pystray.Menu(
-            pystray.MenuItem("Set API Key", self.show_settings),
-            pystray.MenuItem("Exit", self.on_quit)
-        )
-        self.icon = pystray.Icon("FlashSTT", image, "Flash STT (Ctrl+Alt)", menu)
-
-    def show_settings(self, icon=None, item=None):
-        import tkinter as tk
-        from tkinter import messagebox
-        import ctypes
         
-        # Enable High-DPI awareness
+        # Enable High-DPI awareness once at startup
+        self.enable_dpi_awareness()
+
+    def enable_dpi_awareness(self):
+        import ctypes
         try:
             ctypes.windll.shcore.SetProcessDpiAwareness(1)
         except Exception:
@@ -61,6 +52,22 @@ class FlashSTTApp:
             except Exception:
                 pass
 
+    def setup_tray(self):
+        image_path = resource_path("icon.png")
+        image = Image.open(image_path)
+        menu = pystray.Menu(
+            pystray.MenuItem("Set API Key", self.request_settings),
+            pystray.MenuItem("Exit", self.on_quit)
+        )
+        self.icon = pystray.Icon("FlashSTT", image, "Flash STT (Ctrl+Alt)", menu)
+
+    def request_settings(self, icon=None, item=None):
+        self.show_settings_requested = True
+
+    def _open_settings_window(self):
+        import tkinter as tk
+        from tkinter import messagebox
+        
         root = tk.Tk()
         root.title("Flash STT Settings")
         root.geometry("400x220")
@@ -119,6 +126,8 @@ class FlashSTTApp:
                   relief="flat", cursor="hand2").pack(side=tk.LEFT, padx=5)
 
         root.protocol("WM_DELETE_WINDOW", cancel)
+        root.lift()
+        root.focus_force()
         root.mainloop()
 
     def save_api_key(self, key):
