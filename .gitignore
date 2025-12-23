@@ -1,0 +1,49 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+manifest
+spec
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+
+# Agent Specific
+.gemini/
+.tmp/
+prompts/
+directives/
+task.md
+implementation_plan.md
+walkthrough.md
+
+# OS specific
+Thumbs.db
+desktop.ini
+
+# App specific
+last_recording.wav
+icon.ico
+FlashSTT.spec
